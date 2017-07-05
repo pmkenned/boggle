@@ -1,0 +1,183 @@
+<html>
+
+    <head>
+        <title>Boggle Solver!</title>
+        <script src="words35.js"></script>
+
+        <style>
+
+        input[type=text] {
+            font-family: Courier New;
+        }
+
+        input[type=number] {
+            width: 40px;
+        }
+
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button {  
+           opacity: 1;
+        }
+
+        </style>
+    </head>
+
+    <body>
+        <h1>Boggle Solver!</h1>
+
+    <p>
+        Grid size:
+        <button onclick="make4x4()">4x4</button>
+        <button onclick="make5x5()">5x5</button><br><br>
+        Minimum word length: 
+        <input type="number" id="mwl" value="3"><br>
+    </p>
+
+    Board:<br>
+    <input type="text" id="line0" value="dfsp" size="5"><br>
+    <input type="text" id="line1" value="numi" size="5"><br>
+    <input type="text" id="line2" value="caal" size="5"><br>
+    <input type="text" id="line3" value="laml" size="5"><br>
+    <input type="text" id="line4" value="laml" size="5"><br><br>
+
+    <button onclick="solveBoggle()">Solve</button>
+    <button onclick="clearFields()">Clear board</button>
+    <button onclick="randomize()">Randomize</button><br><br>
+
+    <u>Solutions:</u>
+    <p id="solutions"></p>
+
+    <script>
+    document.getElementById("line4").style.visibility = "hidden";
+    var num_rows = 4;
+    var num_cols = 4;
+    var lines = [ "", "", "", "" ];
+
+    var directions = [
+        [-1, -1], // NW
+        [-1,  0], // N 
+        [-1,  1], // NE
+        [ 0,  1], //  E
+        [ 1,  1], // SE
+        [ 1,  0], // S 
+        [ 1, -1], // SW
+        [ 0, -1], //  W
+    ];
+
+    // up to 5x5
+    var grid = [
+        ["", "", "", "", ""],
+        ["", "", "", "", ""],
+        ["", "", "", "", ""],
+        ["", "", "", "", ""],
+        ["", "", "", "", ""],
+    ];
+
+    function make4x4() {
+        document.getElementById("line4").style.visibility = "hidden";
+        num_rows = 4;
+        num_cols = 4;
+    }
+
+    function make5x5() {
+        document.getElementById("line4").style.visibility = "visible";
+        num_rows = 5;
+        num_cols = 5;
+    }
+
+    function clearFields() { 
+        for(l = 0; l < num_rows; l++) {
+            var lineName = "line" + l;
+            document.getElementById(lineName).value = "";
+        }
+    }
+
+    // randomize the boggle board
+    function randomize() { 
+        for(var i = 0; i < num_rows; i++) {
+            var str = "";
+
+            var freqs = {
+                e:19,
+                t:13,
+                a:12, r:12,
+                i:11, n:11, o:11,
+                s:9,
+                d:6,
+                c:5, h:5, l:5,
+                f:4, m:4, p:4, u:4,
+                g:3, y:3,
+                w:2,
+                b:1, j:1, k:1, q:1, v:1, x:1, z:1,
+            };
+
+            var alphaFreq = "";
+            for(var key in freqs) {
+                var value = freqs[key];
+                var letter = Array(value+1).join(key);
+                alphaFreq += letter;
+            }
+
+            for (var j = 0; j < num_cols; j++)
+                str += alphaFreq.charAt(Math.floor(Math.random() * alphaFreq.length));
+            var lineName = "line" + i;
+            document.getElementById(lineName).value = str;
+        }
+    }
+
+    // copy the text field inputs into the input grid
+    function copyIntoGrid() {
+        for(l = 0; l < num_rows; l++) {
+            var lineName = "line" + l;
+            lines[l] = document.getElementById(lineName).value.toLowerCase();
+        }
+
+        for(var r = 0; r < num_rows; r++) {
+            for(var c = 0; c < num_cols; c++) {
+                grid[r][c] = lines[r].substr(c,1);
+            }
+        }
+    }
+
+    // find boggle solutions and display them
+    function solveBoggle() { 
+
+        copyIntoGrid();
+
+        var mwl = document.getElementById("mwl").value;
+
+        var solutions = {}; // check for duplicates
+        var outputText = "";
+
+        // iterate over the rows, columns, and each of the 8 different directions
+        for(var r=0; r < num_rows; r++) {
+            for(var c=0; c < num_cols; c++) {
+                for(dir in directions) {
+                    var word = grid[r][c]; // retrieve first letter
+                    for(var i=0; i < num_rows; i++) { // iterate up to maximum word length
+                        var ri = r+directions[dir][0]*(i+1);
+                        var ci = c+directions[dir][1]*(i+1);
+                        // bounds checking
+                        if((ri < 0) || (ri >= num_rows)) break;
+                        if((ci < 0) || (ci >= num_rows)) break;
+                        word += grid[ri][ci]; // append the next letter
+                        if((word.length >= mwl) && (word in dictionary)) {
+                            if(word in solutions)
+                                ; // already found; skip
+                            else {
+                                solutions[word] = "1"; // add to list of found solutions 
+                                outputText += word + "<br>";
+                            }
+                        }
+                    } // max word length loop
+                } // direction loop
+            } // col loop
+        } // row loop
+
+        document.getElementById("solutions").innerHTML = outputText;
+    }
+    </script>
+
+    </body>
+
+</html>
