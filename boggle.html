@@ -2,7 +2,7 @@
 
     <head>
         <title>Boggle Solver!</title>
-        <script src="words35.js"></script>
+        <script src="words.js"></script>
 
         <style>
 
@@ -30,7 +30,9 @@
         <button onclick="make4x4()">4x4</button>
         <button onclick="make5x5()">5x5</button><br><br>
         Minimum word length: 
-        <input type="number" id="mwl" value="3"><br>
+        <input type="number" id="minWord" value="3"><br>
+        Maximum word length: 
+        <input type="number" id="maxWord" value="7"><br>
     </p>
 
     Board:<br>
@@ -52,6 +54,12 @@
     var num_rows = 4;
     var num_cols = 4;
     var lines = [ "", "", "", "" ];
+
+    var outputText = "";
+    var minWord = document.getElementById("minWord").value;
+    var maxWord = document.getElementById("maxWord").value;;
+    var solutions = {};
+
 
     var directions = [
         [-1, -1], // NW
@@ -86,7 +94,7 @@
     }
 
     function clearFields() { 
-        for(l = 0; l < num_rows; l++) {
+        for(var l = 0; l < num_rows; l++) {
             var lineName = "line" + l;
             document.getElementById(lineName).value = "";
         }
@@ -127,7 +135,7 @@
 
     // copy the text field inputs into the input grid
     function copyIntoGrid() {
-        for(l = 0; l < num_rows; l++) {
+        for(var l = 0; l < num_rows; l++) {
             var lineName = "line" + l;
             lines[l] = document.getElementById(lineName).value.toLowerCase();
         }
@@ -139,43 +147,67 @@
         }
     }
 
+    var count = 0;
+
+    function F(s, r, c, U) {
+
+        count++;
+
+        if(s.length > maxWord)
+            return;
+
+        for(var dir in directions) {
+            var rd = r+directions[dir][0];
+            var cd = c+directions[dir][1];
+            // bounds checking
+            if((rd < 0) || (rd >= num_rows)) continue;
+            if((cd < 0) || (cd >= num_cols)) continue;
+            var key = (rd + "," + cd);
+            if ( U.indexOf(key) > -1 ) // found in array
+                continue;
+            else {
+                s += grid[rd][cd];
+                if((s.length >= minWord) && (s in dictionary)) {
+                    if(s in solutions)
+                        ; // already found; skip
+                    else {
+                        solutions[s] = "1"; // add to the list of found solutions
+                        outputText+= s + "<br>";
+                    }
+                }
+
+                U.push(key);
+                F(s, rd, cd, U);
+                U.pop();
+                s = s.substring(0, s.length - 1);
+            }
+        }
+    }
+
     // find boggle solutions and display them
-    function solveBoggle() { 
+    function solveBoggle() {
+        outputText = "";
+        minWord  = document.getElementById("minWord").value;
+        maxWord  = document.getElementById("maxWord").value;
+        solutions = {};
 
         copyIntoGrid();
 
-        var mwl = document.getElementById("mwl").value;
-
-        var solutions = {}; // check for duplicates
-        var outputText = "";
-
-        // iterate over the rows, columns, and each of the 8 different directions
         for(var r=0; r < num_rows; r++) {
             for(var c=0; c < num_cols; c++) {
-                for(dir in directions) {
-                    var word = grid[r][c]; // retrieve first letter
-                    for(var i=0; i < num_rows; i++) { // iterate up to maximum word length
-                        var ri = r+directions[dir][0]*(i+1);
-                        var ci = c+directions[dir][1]*(i+1);
-                        // bounds checking
-                        if((ri < 0) || (ri >= num_rows)) break;
-                        if((ci < 0) || (ci >= num_rows)) break;
-                        word += grid[ri][ci]; // append the next letter
-                        if((word.length >= mwl) && (word in dictionary)) {
-                            if(word in solutions)
-                                ; // already found; skip
-                            else {
-                                solutions[word] = "1"; // add to list of found solutions 
-                                outputText += word + "<br>";
-                            }
-                        }
-                    } // max word length loop
-                } // direction loop
-            } // col loop
-        } // row loop
+                var s = grid[r][c];
+                var key = r + "," + c;
+                var U = [];
+                U.push(key);
+                F(s, r, c, U);
+                console.log(key);
+            }
+        }
 
+        console.log(count);
         document.getElementById("solutions").innerHTML = outputText;
     }
+
     </script>
 
     </body>
